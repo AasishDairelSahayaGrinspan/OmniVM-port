@@ -25,7 +25,8 @@ struct SkyLightQueryFunctions {
     let windowQueryResultCopyWindows: WindowQueryResultCopyWindowsFunc
     let windowIteratorGetCount: WindowIteratorGetCountFunc
     let windowIteratorAdvance: WindowIteratorAdvanceFunc
-    let windowIteratorGetCornerRadii: WindowIteratorGetCornerRadiiFunc
+    // INTEL PORT: optional (Tahoe-only; missing on Sequoia SkyLight).
+    let windowIteratorGetCornerRadii: WindowIteratorGetCornerRadiiFunc?
     let windowIteratorGetResolvedCornerRadii: WindowIteratorGetCornerRadiiFunc?
     let windowIteratorGetBounds: WindowIteratorGetBoundsFunc
     let windowIteratorGetWindowID: WindowIteratorGetWindowIDFunc
@@ -43,7 +44,7 @@ struct SkyLightQueryFunctions {
         )
         windowIteratorGetCount = resolver.resolve("SLSWindowIteratorGetCount", as: WindowIteratorGetCountFunc.self)
         windowIteratorAdvance = resolver.resolve("SLSWindowIteratorAdvance", as: WindowIteratorAdvanceFunc.self)
-        windowIteratorGetCornerRadii = resolver.resolve(
+        windowIteratorGetCornerRadii = resolver.resolveOptional(
             "SLSWindowIteratorGetCornerRadii",
             as: WindowIteratorGetCornerRadiiFunc.self
         )
