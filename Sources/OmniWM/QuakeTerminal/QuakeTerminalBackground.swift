@@ -26,15 +26,10 @@ final class QuakeTerminalBackground {
            let containerView
         {
             let effectView = makeGlassEffectView(in: containerView)
-            let style: NSGlassEffectView.Style = switch glassStyle {
-            case .regular:
-                .regular
-            case .clear:
-                .clear
-            }
+            // INTEL PORT: pass through app-level style (NSGlassEffectView is macOS 26+).
             let color = ghosttyBackgroundColor(for: appearance)
             effectView.configure(
-                style: style,
+                style: glassStyle,
                 backgroundColor: color,
                 backgroundOpacity: appearance.opacity,
                 isKeyWindow: window?.isKeyWindow == true

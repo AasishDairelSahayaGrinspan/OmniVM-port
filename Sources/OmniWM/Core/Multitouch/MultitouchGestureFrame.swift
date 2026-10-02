@@ -23,7 +23,8 @@ struct MultitouchContactSession: Equatable, Sendable {
 
 struct MultitouchContactSessions: Sendable {
     var generation: UInt = 0
-    var sessions = InlineArray<64, UInt64>(repeating: 0)
+    // INTEL PORT: Array instead of InlineArray<64, UInt64> (macOS 26+ only).
+    var sessions: [UInt64] = Array(repeating: 0, count: 64)
 
     func contains(_ contact: MultitouchContactSession) -> Bool {
         generation != 0 && contact.generation == generation
@@ -39,7 +40,8 @@ extension MultitouchGestureSource {
     }
 
     struct RawTouchBuffer: RandomAccessCollection, Sendable {
-        private var inline = InlineArray<16, RawTouch>(repeating: RawTouch(x: 0, y: 0))
+        // INTEL PORT: Array instead of InlineArray<16, RawTouch> (macOS 26+ only).
+        private var inline: [RawTouch] = Array(repeating: RawTouch(x: 0, y: 0), count: 16)
         private var overflow: [RawTouch] = []
         private(set) var count = 0
 

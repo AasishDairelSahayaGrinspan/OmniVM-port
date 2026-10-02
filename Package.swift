@@ -11,7 +11,8 @@ let package = Package(
     name: "OmniWM",
     defaultLocalization: "en",
     platforms: [
-        .macOS(.v26)
+        // INTEL PORT: Sequoia (upstream: .v26 Tahoe). Allows launch on 15.7.7; Tahoe APIs need @available guards.
+        .macOS(.v15)
     ],
     products: [
         .executable(

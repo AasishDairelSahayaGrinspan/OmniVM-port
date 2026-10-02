@@ -206,10 +206,16 @@ actor IPCConnection {
     }
 
     nonisolated static func decodeUTF8(_ bytes: Span<UInt8>) throws -> String {
-        do {
-            return String(copying: try UTF8Span(validating: bytes))
-        } catch {
+        // INTEL PORT: avoid UTF8Span/String(copying:) (macOS 26+); validate via String(bytes:encoding:).
+        // Span is not Sequence in Swift 6.2, so copy via index.
+        var array = [UInt8]()
+        array.reserveCapacity(bytes.count)
+        for index in 0 ..< bytes.count {
+            array.append(bytes[index])
+        }
+        guard let str = String(bytes: array, encoding: .utf8) else {
             throw POSIXError(.EINVAL)
         }
+        return str
     }
 }

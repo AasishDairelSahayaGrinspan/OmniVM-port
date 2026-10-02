@@ -245,7 +245,11 @@ extension Monitor {
 
 extension NSScreen {
     var displayId: CGDirectDisplayID? {
-        cgDirectDisplayID
+        // INTEL PORT: cgDirectDisplayID is macOS 26+; fall back to deviceDescription on Sequoia.
+        if #available(macOS 26, *) {
+            return cgDirectDisplayID
+        }
+        return deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID
     }
 }
 

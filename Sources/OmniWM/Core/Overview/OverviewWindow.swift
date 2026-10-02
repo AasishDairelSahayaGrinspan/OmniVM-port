@@ -77,17 +77,20 @@ final class OverviewWindow: NSPanel {
 
         let bounds = CGRect(origin: .zero, size: monitor.frame.size)
         let container = NSView(frame: bounds)
-        let glass = NSGlassEffectView(frame: bounds)
-        glass.style = .regular
-        glass.appearance = NSAppearance(named: .darkAqua)
-        glass.wantsLayer = true
-        glass.layer?.opacity = 0
-        glass.autoresizingMask = [.width, .height]
+        // INTEL PORT: NSGlassEffectView is macOS 26+; NSVisualEffectView on Sequoia.
+        let backdrop = NSVisualEffectView(frame: bounds)
+        backdrop.material = .hudWindow
+        backdrop.blendingMode = .behindWindow
+        backdrop.state = .active
+        backdrop.appearance = NSAppearance(named: .darkAqua)
+        backdrop.wantsLayer = true
+        backdrop.layer?.opacity = 0
+        backdrop.autoresizingMask = [.width, .height]
         overlayView.frame = bounds
         overlayView.autoresizingMask = [.width, .height]
-        container.addSubview(glass)
+        container.addSubview(backdrop)
         container.addSubview(overlayView)
-        overlayView.layerRenderer.glassLayer = glass.layer
+        overlayView.layerRenderer.glassLayer = backdrop.layer
         contentView = container
     }
 

@@ -6,10 +6,15 @@ import SwiftUI
 extension View {
     @ViewBuilder
     func omniGlassEffect<S: Shape>(in shape: S, prominent: Bool = false) -> some View {
-        if prominent {
-            self.glassEffect(.regular.tint(.accentColor), in: shape)
+        // INTEL PORT: glassEffect is macOS 26+; Sequoia fallback uses material background.
+        if #available(macOS 26, *) {
+            if prominent {
+                self.glassEffect(.regular.tint(.accentColor), in: shape)
+            } else {
+                self.glassEffect(.regular, in: shape)
+            }
         } else {
-            self.glassEffect(.regular, in: shape)
+            self.background(.thinMaterial, in: shape)
         }
     }
 }

@@ -5,32 +5,35 @@ import AppKit
 
 @MainActor
 final class QuakeTerminalGlassView: NSView {
-    private let glassEffectView: NSGlassEffectView
+    // INTEL PORT: NSGlassEffectView is macOS 26+; use NSVisualEffectView on Sequoia.
+    private let effectView: NSVisualEffectView
     private let tintOverlay: NSView
 
     override init(frame frameRect: NSRect) {
-        glassEffectView = NSGlassEffectView()
+        effectView = NSVisualEffectView()
         tintOverlay = NSView()
         super.init(frame: frameRect)
         configureSubviews()
     }
 
     required init?(coder: NSCoder) {
-        glassEffectView = NSGlassEffectView()
+        effectView = NSVisualEffectView()
         tintOverlay = NSView()
         super.init(coder: coder)
         configureSubviews()
     }
 
     func configure(
-        style: NSGlassEffectView.Style,
+        style: QuakeGhosttyGlassStyle,
         backgroundColor: NSColor,
         backgroundOpacity: Double,
         isKeyWindow: Bool
     ) {
-        glassEffectView.style = style
-        glassEffectView.tintColor = backgroundColor.withAlphaComponent(backgroundOpacity)
-        glassEffectView.cornerRadius = 0
+        effectView.material = style == .clear ? .sheet : .hudWindow
+        effectView.blendingMode = .behindWindow
+        effectView.state = .active
+        effectView.wantsLayer = true
+        effectView.layer?.cornerRadius = 0
         updateKeyStatus(isKeyWindow, backgroundColor: backgroundColor)
     }
 
@@ -45,14 +48,14 @@ final class QuakeTerminalGlassView: NSView {
     }
 
     private func configureSubviews() {
-        glassEffectView.frame = bounds
-        glassEffectView.autoresizingMask = [.width, .height]
-        addSubview(glassEffectView)
+        effectView.frame = bounds
+        effectView.autoresizingMask = [.width, .height]
+        addSubview(effectView)
 
         tintOverlay.frame = bounds
         tintOverlay.autoresizingMask = [.width, .height]
         tintOverlay.wantsLayer = true
-        addSubview(tintOverlay, positioned: .above, relativeTo: glassEffectView)
+        addSubview(tintOverlay, positioned: .above, relativeTo: effectView)
     }
 
     private func inactiveTint(for color: NSColor) -> (color: NSColor, opacity: CGFloat) {

@@ -12,11 +12,21 @@ struct SettingsDetailView: View {
     let navigation: SettingsNavigationModel
 
     var body: some View {
-        contentView
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .navigationTitle(section.displayName)
-            .backgroundExtensionEffect()
+        Group {
+            if #available(macOS 26, *) {
+                contentView
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .navigationTitle(section.displayName)
+                    .backgroundExtensionEffect()
+            } else {
+                // INTEL PORT: backgroundExtensionEffect is macOS 26+; plain background on Sequoia.
+                contentView
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .navigationTitle(section.displayName)
+            }
+        }
     }
 
     @ViewBuilder
