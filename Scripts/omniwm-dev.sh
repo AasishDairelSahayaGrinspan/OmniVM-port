@@ -4,7 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEV_APP_NAME="${OMNIWM_DEV_APP_NAME:-OmniWM Dev}"
 DEV_BUNDLE_ID="com.barut.OmniWM.dev"
-DEV_IDENTITY="${OMNIWM_SIGNING_IDENTITY:-OmniWM Dev}"
+# INTEL PORT: stable Apple Development identity so TCC grants survive rebuilds (ad-hoc breaks them).
+DEV_IDENTITY="${OMNIWM_SIGNING_IDENTITY:-Apple Development: aasishdarrel@gmail.com (L8HTG27444)}"
 INSTALL_DIR="${OMNIWM_DEV_INSTALL_DIR:-$HOME/Applications}"
 RELEASE_APP="${OMNIWM_RELEASE_APP:-/Applications/OmniWM.app}"
 RELEASE_BUNDLE_ID="com.barut.OmniWM"
