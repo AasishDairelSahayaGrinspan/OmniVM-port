@@ -37,7 +37,7 @@ lint-fix: check-tool-versions
 
 build:
 	./Scripts/ghostty-preflight.sh verify
-	$(SWIFT_WITH_GHOSTTY) swift build --arch arm64
+	$(SWIFT_WITH_GHOSTTY) swift build --arch x86_64
 
 localization-check: build
 	python3 Scripts/localization.py check

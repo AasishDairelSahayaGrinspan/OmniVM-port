@@ -5,7 +5,8 @@ import AppKit
 import ApplicationServices
 import Carbon
 import IOKit.pwr_mgt
-import ScreenCaptureKit
+// INTEL PORT: @preconcurrency for Swift 6.2 SDK (upstream builds with 6.4 where Sendable is inferred).
+@preconcurrency import ScreenCaptureKit
 
 @MainActor
 enum SystemAPIProbes {

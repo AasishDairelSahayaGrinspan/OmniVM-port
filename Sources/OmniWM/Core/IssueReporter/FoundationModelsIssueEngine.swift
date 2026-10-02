@@ -19,37 +19,10 @@ final class FoundationModelsIssueEngine: IssueRewriting {
     }
 
     func rewrite(_ freeform: String, hotkeyContext: String) async throws -> RewrittenIssue {
-        let instructions: String
-        if hotkeyContext.isEmpty {
-            instructions = IssueTemplate.rewriteInstructions
-        } else {
-            instructions = """
-            \(IssueTemplate.rewriteInstructions)
-
-            \(IssueTemplate.hotkeyContextPreamble)
-            \(hotkeyContext)
-            """
-        }
-        let session = LanguageModelSession {
-            instructions
-        }
-        do {
-            let generated = try await session.respond(
-                to: freeform,
-                generating: GeneratedIssue.self,
-                options: GenerationOptions(samplingMode: .greedy)
-            ).content
-            let body = IssueTemplate.assemble(
-                summary: generated.summary,
-                stepsToReproduce: generated.stepsToReproduce,
-                expectedBehavior: generated.expectedBehavior,
-                actualBehavior: generated.actualBehavior,
-                additionalContext: generated.additionalContext
-            )
-            return RewrittenIssue(title: generated.title, body: body)
-        } catch {
-            throw IssueReportError.generationFailed(error.localizedDescription)
-        }
+        // INTEL PORT: Apple Intelligence / macOS 27 unavailable on Intel (Tahoe 26 is last Intel release).
+        // Upstream calls session.respond (throwing in SDK 27); SDK 26.2 signature differs, so stub out.
+        // This code path is unreachable on Intel (caller checks availability first).
+        throw IssueReportError.generationFailed("On-device AI requires Apple Silicon")
     }
 
     private static func map(_ reason: SystemLanguageModel.Availability.UnavailableReason) -> IssueAIAvailability {

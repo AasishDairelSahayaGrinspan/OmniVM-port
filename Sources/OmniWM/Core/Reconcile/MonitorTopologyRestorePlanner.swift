@@ -220,16 +220,20 @@ enum MonitorTopologyRestorePlanner {
         let firstAssignedMonitorId = sortedMonitors.first(where: {
             visibleAssignments[$0.id] != nil
         })?.id
-        let resolvedInteractionMonitorId = focus.prioritizesInteractionMonitor
-            ? connectedInteractionMonitorId
-            ?? pendingFocusMonitorId
-            ?? firstAssignedMonitorId
-            ?? sortedMonitors.first?.id
-            : confirmedFocusMonitorId
-            ?? pendingFocusMonitorId
-            ?? connectedInteractionMonitorId
-            ?? firstAssignedMonitorId
-            ?? sortedMonitors.first?.id
+        // INTEL PORT: if/else for Swift 6.2 type-checker (upstream ternary chain needs 6.4).
+        let resolvedInteractionMonitorId: Monitor.ID?
+        if focus.prioritizesInteractionMonitor {
+            resolvedInteractionMonitorId = connectedInteractionMonitorId
+                ?? pendingFocusMonitorId
+                ?? firstAssignedMonitorId
+                ?? sortedMonitors.first?.id
+        } else {
+            resolvedInteractionMonitorId = confirmedFocusMonitorId
+                ?? pendingFocusMonitorId
+                ?? connectedInteractionMonitorId
+                ?? firstAssignedMonitorId
+                ?? sortedMonitors.first?.id
+        }
 
         let resolvedPreviousInteractionMonitorId: Monitor.ID?
         if let connectedInteractionMonitorId,

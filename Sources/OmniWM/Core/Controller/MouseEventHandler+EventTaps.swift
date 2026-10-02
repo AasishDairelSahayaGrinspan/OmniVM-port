@@ -6,19 +6,20 @@ import Foundation
 
 extension MouseEventHandler {
     nonisolated static func sessionEventMask(annotatedMoveTapInstalled: Bool) -> CGEventMask {
-        var mask: CGEventMask =
-            (1 << CGEventType.leftMouseDown.rawValue) |
-            (1 << CGEventType.leftMouseDragged.rawValue) |
-            (1 << CGEventType.leftMouseUp.rawValue) |
-            (1 << CGEventType.rightMouseDown.rawValue) |
-            (1 << CGEventType.rightMouseDragged.rawValue) |
-            (1 << CGEventType.rightMouseUp.rawValue) |
-            (1 << CGEventType.otherMouseDown.rawValue) |
-            (1 << CGEventType.otherMouseDragged.rawValue) |
-            (1 << CGEventType.otherMouseUp.rawValue) |
-            (1 << CGEventType.scrollWheel.rawValue)
+        // INTEL PORT: incremental OR for Swift 6.2 type-checker (upstream single chain needs 6.4).
+        var mask: CGEventMask = 0
+        mask |= CGEventMask(1) << CGEventType.leftMouseDown.rawValue
+        mask |= CGEventMask(1) << CGEventType.leftMouseDragged.rawValue
+        mask |= CGEventMask(1) << CGEventType.leftMouseUp.rawValue
+        mask |= CGEventMask(1) << CGEventType.rightMouseDown.rawValue
+        mask |= CGEventMask(1) << CGEventType.rightMouseDragged.rawValue
+        mask |= CGEventMask(1) << CGEventType.rightMouseUp.rawValue
+        mask |= CGEventMask(1) << CGEventType.otherMouseDown.rawValue
+        mask |= CGEventMask(1) << CGEventType.otherMouseDragged.rawValue
+        mask |= CGEventMask(1) << CGEventType.otherMouseUp.rawValue
+        mask |= CGEventMask(1) << CGEventType.scrollWheel.rawValue
         if !annotatedMoveTapInstalled {
-            mask |= 1 << CGEventType.mouseMoved.rawValue
+            mask |= CGEventMask(1) << CGEventType.mouseMoved.rawValue
         }
         return mask
     }

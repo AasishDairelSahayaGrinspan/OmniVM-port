@@ -33,7 +33,9 @@ load_metadata() {
       OMNIWM_GHOSTTY_ARCHIVE_RELATIVE_PATH)
         case "$value" in
           Frameworks/GhosttyKit.xcframework/macos-arm64/libghostty-internal-fat.a|\
-	          Frameworks/GhosttyKit.xcframework/macos-arm64/libghostty-internal.a)
+          Frameworks/GhosttyKit.xcframework/macos-arm64/libghostty-internal.a|\
+          Frameworks/GhosttyKit.xcframework/macos-x86_64/libghostty-internal.a|\
+          Frameworks/GhosttyKit.xcframework/macos-arm64_x86_64/libghostty-internal.a)
             OMNIWM_GHOSTTY_ARCHIVE_RELATIVE_PATH="$value"
             ;;
           *)
@@ -73,12 +75,12 @@ verify_ghostty() {
 
   if ! archs="$(lipo "$OMNIWM_GHOSTTY_ARCHIVE_PATH" -archs 2>/dev/null)"; then
     lipo -info "$OMNIWM_GHOSTTY_ARCHIVE_PATH" >&2 || true
-    fail "Ghostty archive must be arm64-only"
+    fail "Ghostty archive must be arm64 or x86_64 (Intel port allows x86_64)"
   fi
 
-  if [ "$archs" != "arm64" ]; then
+  if [ "$archs" != "arm64" ] && [ "$archs" != "x86_64" ]; then
     lipo -info "$OMNIWM_GHOSTTY_ARCHIVE_PATH" >&2 || true
-    fail "Ghostty archive must be arm64-only"
+    fail "Ghostty archive must be arm64 or x86_64 (found: $archs)"
   fi
 
   actual_sha="$(shasum -a 256 "$OMNIWM_GHOSTTY_ARCHIVE_PATH" | awk '{print $1}')"

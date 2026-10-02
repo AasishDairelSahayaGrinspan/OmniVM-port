@@ -185,13 +185,16 @@ struct WindowClassificationRulesSnapshot: Codable, Equatable, Sendable {
     }
 
     private static func estimatedDiagnosticBytes(_ rule: AppRule) -> Int {
-        256
-            + min(rule.bundleId.utf8.count, RuntimeTraceLimits.diagnosticStringBytes)
-            + min(rule.appNameSubstring?.utf8.count ?? 0, RuntimeTraceLimits.diagnosticStringBytes)
-            + min(rule.titleSubstring?.utf8.count ?? 0, RuntimeTraceLimits.diagnosticStringBytes)
-            + min(rule.titleRegex?.utf8.count ?? 0, RuntimeTraceLimits.diagnosticStringBytes)
-            + min(rule.axRole?.utf8.count ?? 0, RuntimeTraceLimits.diagnosticStringBytes)
-            + min(rule.axSubrole?.utf8.count ?? 0, RuntimeTraceLimits.diagnosticStringBytes)
-            + min(rule.assignToWorkspace?.utf8.count ?? 0, RuntimeTraceLimits.diagnosticStringBytes)
+        // INTEL PORT: broken into steps for Swift 6.2 type-checker (upstream builds with 6.4).
+        let limit = RuntimeTraceLimits.diagnosticStringBytes
+        var total = 256
+        total += min(rule.bundleId.utf8.count, limit)
+        total += min(rule.appNameSubstring?.utf8.count ?? 0, limit)
+        total += min(rule.titleSubstring?.utf8.count ?? 0, limit)
+        total += min(rule.titleRegex?.utf8.count ?? 0, limit)
+        total += min(rule.axRole?.utf8.count ?? 0, limit)
+        total += min(rule.axSubrole?.utf8.count ?? 0, limit)
+        total += min(rule.assignToWorkspace?.utf8.count ?? 0, limit)
+        return total
     }
 }

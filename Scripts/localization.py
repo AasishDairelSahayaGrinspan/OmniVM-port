@@ -254,7 +254,7 @@ def validate_locale_completeness(catalog_dir, languages):
 
 def compiler_stringsdata():
     result = subprocess.run(
-        ["swift", "build", "--arch", "arm64", "--show-bin-path"],
+        ["swift", "build", "--arch", "x86_64", "--show-bin-path"],
         cwd=ROOT, check=True, capture_output=True, text=True,
     )
     bin_path = Path(result.stdout.strip())
@@ -262,7 +262,7 @@ def compiler_stringsdata():
     sources = (ROOT / "Sources/OmniWM", ROOT / "Sources/OmniWMApp")
     found = {}
     for path in intermediates.rglob("*.stringsdata"):
-        if bin_path.name not in path.parts or "Objects-normal" not in path.parts or "arm64" not in path.parts:
+        if bin_path.name not in path.parts or "Objects-normal" not in path.parts or "x86_64" not in path.parts:
             continue
         if any("-testable-" in part for part in path.parts):
             continue

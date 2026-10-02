@@ -314,7 +314,8 @@ enum CLIRenderer {
         _ payload: IPCCapabilitiesQueryResult,
         format: CLIOutputFormat
     ) -> String {
-        let rows = [
+        // INTEL PORT: explicit type annotation for Swift 6.2 type-checker (upstream builds with 6.4).
+        let rows: [[String]] = [
             ["protocol-version", String(payload.protocolVersion)],
             ["app-version", payload.appVersion ?? "-"],
             ["authorization-required", payload.authorizationRequired ? "true" : "false"],

@@ -32,33 +32,36 @@ check_prerequisites() {
     problem "macOS 26 or newer is required."
     return
   fi
-  [ "$(uname -m)" = arm64 ] || problem "Use a native Apple Silicon terminal, without Rosetta."
+  [ "$(uname -m)" = arm64 ] || [ "$(uname -m)" = x86_64 ] || problem "Use a native macOS terminal, without Rosetta (arm64 or x86_64 Intel port)."
   version="$(sw_vers -productVersion)"
   major="${version%%.*}"
-  if [ "$major" -lt 26 ]; then
-    problem "macOS 26 or newer is required; found $version."
+  # INTEL PORT: allow Sequoia 15 host for Intel port (upstream requires 26).
+  if [ "$major" -lt 15 ]; then
+    problem "macOS 15 or newer is required for Intel port; found $version."
   else
-    echo "macOS: $version ($(uname -m))"
+    echo "macOS: $version ($(uname -m)) [Intel port]"
   fi
 
   if xcode_version="$(xcodebuild -version 2>/dev/null)"; then
     echo "$xcode_version"
     version="$(printf '%s\n' "$xcode_version" | awk '/^Xcode / { print $2 }')"
     major="${version%%.*}"
-    [ "$major" -ge 27 ] || problem "Select Xcode 27 or newer; Xcode 26 does not include Swift 6.4."
+    # INTEL PORT: Xcode 26+ allowed (upstream requires 27 which is ARM-only).
+    [ "$major" -ge 26 ] || problem "Select Xcode 26 or newer for Intel port; found $version."
   else
-    problem "Install and select Xcode 27 with Swift 6.4; Command Line Tools alone are insufficient."
+    problem "Install and select Xcode 26+ with Swift 6.2+ for Intel port; Command Line Tools alone are insufficient."
   fi
 
   if version="$(swift --version 2>/dev/null)"; then
     echo "$version"
     version="$(printf '%s\n' "$version" | sed -n 's/.*Swift version \([0-9.]*\).*/\1/p' | head -n 1)"
     IFS=. read -r major minor _ <<< "$version"
-    if [ "${major:-0}" -lt 6 ] || { [ "${major:-0}" -eq 6 ] && [ "${minor:-0}" -lt 4 ]; }; then
-      problem "Swift 6.4 or newer is required; select the Xcode 27 toolchain."
+    # INTEL PORT: Swift 6.2+ allowed (upstream requires 6.4 which needs Xcode 27 ARM-only).
+    if [ "${major:-0}" -lt 6 ] || { [ "${major:-0}" -eq 6 ] && [ "${minor:-0}" -lt 2 ]; }; then
+      problem "Swift 6.2 or newer is required for Intel port; select the Xcode 26 toolchain."
     fi
   else
-    problem "Swift is unavailable; install and select Xcode 27."
+    problem "Swift is unavailable; install and select Xcode 26."
   fi
 
   if version="$(xcrun --sdk macosx --show-sdk-version 2>/dev/null)"; then

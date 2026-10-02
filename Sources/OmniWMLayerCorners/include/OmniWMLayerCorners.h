@@ -3,6 +3,11 @@
 
 #import <QuartzCore/QuartzCore.h>
 
+// INTEL PORT: NS_SWIFT_MAIN_ACTOR requires Xcode 27 SDK; define as empty on older SDKs.
+#ifndef NS_SWIFT_MAIN_ACTOR
+#define NS_SWIFT_MAIN_ACTOR
+#endif
+
 NS_ASSUME_NONNULL_BEGIN
 
 typedef struct CACornerRadii {

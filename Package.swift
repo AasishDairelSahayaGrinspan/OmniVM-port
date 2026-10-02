@@ -1,9 +1,11 @@
-// swift-tools-version: 6.4
+// swift-tools-version: 6.2
+// INTEL PORT: downgraded from 6.4 (requires Xcode 27 ARM-only) to 6.2 (Xcode 26.3 Intel)
 import Foundation
 import PackageDescription
 
 let packageDirectory = URL(fileURLWithPath: #filePath).deletingLastPathComponent().path
-let ghosttyMacOSLibraryDirectory = "\(packageDirectory)/Frameworks/GhosttyKit.xcframework/macos-arm64"
+// INTEL PORT: x86_64 slice (upstream: macos-arm64)
+let ghosttyMacOSLibraryDirectory = "\(packageDirectory)/Frameworks/GhosttyKit.xcframework/macos-x86_64"
 
 let package = Package(
     name: "OmniWM",
@@ -90,7 +92,8 @@ let package = Package(
                 .linkedLibrary("c++"),
                 .unsafeFlags(["-L\(ghosttyMacOSLibraryDirectory)"]),
                 .unsafeFlags(["-F/System/Library/PrivateFrameworks", "-framework", "SkyLight"]),
-                .unsafeFlags(["-weak_framework", "FoundationModels"])
+                // INTEL PORT: -weak_framework unsupported as raw linkerSetting on Swift 6.2; route via -Xlinker.
+                .unsafeFlags(["-Xlinker", "-weak_framework", "-Xlinker", "FoundationModels"])
             ]
         ),
         .executableTarget(
