@@ -1,0 +1,56 @@
+{
+  "observation": {
+    "tokenPid": 1000,
+    "tokenWindowId": 3,
+    "appName": "Dialog App",
+    "bundleId": "com.example.dialog",
+    "rulesRevision": 1,
+    "input": {
+      "appName": "Dialog App",
+      "ax": {
+        "role": "AXWindow",
+        "subrole": "AXDialog",
+        "title": "Confirm changes?",
+        "hasCloseButton": true,
+        "hasFullscreenButton": false,
+        "hasZoomButton": false,
+        "hasMinimizeButton": false,
+        "appPolicy": "regular",
+        "bundleId": "com.example.dialog",
+        "attributeFetchSucceeded": true,
+        "isMain": false,
+        "isModal": true
+      },
+      "windowServer": {
+        "id": 3,
+        "pid": 1000,
+        "level": 0,
+        "frameX": 0,
+        "frameY": 0,
+        "frameWidth": 520,
+        "frameHeight": 360,
+        "tags": 0,
+        "attributes": 0,
+        "parentId": 0
+      },
+      "appFullscreen": false
+    },
+    "observedDecision": {
+      "disposition": "floating",
+      "source": "heuristic",
+      "heuristicReasons": [
+        "nonStandardSubrole"
+      ],
+      "layoutDecisionKind": "fallbackLayout"
+    }
+  },
+  "rules": [],
+  "expectedDecision": {
+    "disposition": "floating",
+    "source": "heuristic",
+    "heuristicReasons": [
+      "nonStandardSubrole"
+    ],
+    "layoutDecisionKind": "fallbackLayout"
+  }
+}

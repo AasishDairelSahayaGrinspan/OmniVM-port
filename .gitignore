@@ -1,0 +1,42 @@
+# Build artifacts
+.build/
+__pycache__/
+
+# SwiftPM
+.swiftpm/xcode/xcuserdata/
+.swiftpm/xcode/package.xcworkspace/xcuserdata/
+
+# Xcode
+*.xcworkspace/xcuserdata/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcuserstate
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Build output
+dist/
+
+# External frameworks (downloaded/built separately)
+Frameworks/
+
+# Codex
+.codex-home/
+.claude/
+/.agents/
+.tmp/
+.cache/
+.codex-cache/
+/AGENTS.md
+/CLAUDE.md
+
+# Local documentation
+STABILITY_IMPROVEMENTS.md

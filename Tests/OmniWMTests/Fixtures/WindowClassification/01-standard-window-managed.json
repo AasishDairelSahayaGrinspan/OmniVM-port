@@ -1,0 +1,51 @@
+{
+  "observation": {
+    "tokenPid": 1000,
+    "tokenWindowId": 1,
+    "appName": "Standard App",
+    "bundleId": "com.example.standard",
+    "rulesRevision": 1,
+    "input": {
+      "appName": "Standard App",
+      "ax": {
+        "role": "AXWindow",
+        "subrole": "AXStandardWindow",
+        "title": "Untitled",
+        "hasCloseButton": true,
+        "hasFullscreenButton": true,
+        "fullscreenButtonEnabled": true,
+        "hasZoomButton": true,
+        "hasMinimizeButton": true,
+        "appPolicy": "regular",
+        "bundleId": "com.example.standard",
+        "attributeFetchSucceeded": true
+      },
+      "windowServer": {
+        "id": 1,
+        "pid": 1000,
+        "level": 0,
+        "frameX": 0,
+        "frameY": 0,
+        "frameWidth": 800,
+        "frameHeight": 600,
+        "tags": 0,
+        "attributes": 0,
+        "parentId": 0
+      },
+      "appFullscreen": false
+    },
+    "observedDecision": {
+      "disposition": "managed",
+      "source": "heuristic",
+      "heuristicReasons": [],
+      "layoutDecisionKind": "fallbackLayout"
+    }
+  },
+  "rules": [],
+  "expectedDecision": {
+    "disposition": "managed",
+    "source": "heuristic",
+    "heuristicReasons": [],
+    "layoutDecisionKind": "fallbackLayout"
+  }
+}
