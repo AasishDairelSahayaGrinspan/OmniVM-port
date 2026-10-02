@@ -5,6 +5,7 @@ import AppKit
 import ApplicationServices
 import CoreGraphics
 import Observation
+import Security
 import SwiftUI
 
 enum LaunchPermissionKind: CaseIterable, Identifiable {
@@ -118,9 +119,26 @@ struct LaunchPermissionEnvironment {
     }
 }
 
+// INTEL PORT DEBUG (temporary): identifies which signature the running process has,
+// so stale/ad-hoc vs stable-cert issues are visible in logs.
+@MainActor
+func currentSigningSummary() -> String {
+    var code: SecCode?
+    guard SecCodeCopySelf(SecCSFlags(), &code) == errSecSuccess, let code else { return "nocode" }
+    var staticCode: SecStaticCode?
+    guard SecCodeCopyStaticCode(code, SecCSFlags(), &staticCode) == errSecSuccess, let staticCode else {
+        return "nostatic"
+    }
+    var info: CFDictionary?
+    guard SecCodeCopySigningInformation(staticCode, SecCSFlags(), &info) == errSecSuccess else { return "noinfo" }
+    guard let dict = info as? [String: Any] else { return "baddict" }
+    let ident = dict["identifier"] as? String ?? "?ident"
+    let team = dict["teamid"] as? String ?? "?team"
+    return "\(ident)/\(team)"
+}
+
 @MainActor @Observable
-final class LaunchPermissionsModel {
-    private(set) var snapshot: LaunchPermissionSnapshot
+final class LaunchPermissionsModel {    private(set) var snapshot: LaunchPermissionSnapshot
     @ObservationIgnored private let environment: LaunchPermissionEnvironment
 
     init(environment: LaunchPermissionEnvironment = .live) {
@@ -136,6 +154,11 @@ final class LaunchPermissionsModel {
 
     func refresh() {
         snapshot = environment.snapshot()
+        // INTEL PORT DEBUG (temporary): log raw TCC values + signing identity on every check.
+        let ax = snapshot.accessibilityGranted ? 1 : 0
+        let im = snapshot.inputMonitoringGranted ? 1 : 0
+        let sr = snapshot.screenRecordingGranted ? 1 : 0
+        NSLog("[OmniWM-PermDebug] refresh AX=%d IM=%d SR=%d sig=%@", ax, im, sr, currentSigningSummary())
     }
 
     func request(_ kind: LaunchPermissionKind) {
@@ -149,8 +172,7 @@ final class LaunchPermissionsModel {
 }
 
 @MainActor
-final class LaunchPermissionsWindowController {
-    private let presenter: HostedWindowPresenter
+final class LaunchPermissionsWindowController {    private let presenter: HostedWindowPresenter
     private let model: LaunchPermissionsModel
     private var startAction: (@MainActor () -> Void)?
     private var quitAction: (@MainActor () -> Void)?
