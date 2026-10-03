@@ -11,14 +11,32 @@ struct BorderConfig: Equatable {
         let surfacePadding: CGFloat
 
         func localized() -> Self {
+            // Panel-local coordinates: surface origin becomes zero, target keeps
+            // its exact relative offset (equals inset when unclipped).
             let localSurfaceFrame = CGRect(origin: .zero, size: surfaceFrame.size)
-            let inset = width + surfacePadding
+            let localTargetOrigin = CGPoint(
+                x: targetFrame.minX - surfaceFrame.minX,
+                y: targetFrame.minY - surfaceFrame.minY
+            )
             return Self(
-                targetFrame: CGRect(
-                    origin: CGPoint(x: inset, y: inset),
-                    size: targetFrame.size
-                ),
+                targetFrame: CGRect(origin: localTargetOrigin, size: targetFrame.size),
                 surfaceFrame: localSurfaceFrame,
+                width: width,
+                surfacePadding: surfacePadding
+            )
+        }
+
+        /// Confines the panel to the target's screen so the rim never bleeds
+        /// onto an adjacent monitor or neighboring window. No-op when the
+        /// screen is unknown or already contains the panel.
+        func clippedToScreen(_ screenFrame: CGRect) -> Self {
+            guard !screenFrame.isNull, !screenFrame.isInfinite, !screenFrame.isEmpty else { return self }
+            let clipped = surfaceFrame.intersection(screenFrame)
+            guard !clipped.isNull, !clipped.isEmpty else { return self }
+            guard clipped != surfaceFrame else { return self }
+            return Self(
+                targetFrame: targetFrame,
+                surfaceFrame: clipped,
                 width: width,
                 surfacePadding: surfacePadding
             )

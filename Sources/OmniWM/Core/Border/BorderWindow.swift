@@ -98,9 +98,13 @@ final class BorderWindow {
         BorderOpMetricsRecorder.shared.noteUpdate()
         needsWindowLevelRetry = false
         guard let targetWid = UInt32(exactly: targetToken.windowId), targetWid != 0 else { return false }
-        let scale = backingScale(for: targetFrame)
+        let metrics = backingMetrics(for: targetFrame)
+        let scale = metrics.scale
         let resolvedCornerRadii = cornerRadii.nonnegative
-        let geometry = config.resolvedGeometry(for: targetFrame, scale: scale)
+        var geometry = config.resolvedGeometry(for: targetFrame, scale: scale)
+        // BORDER OVERLAP FIX: confine the panel to the target's screen so the
+        // rim never bleeds onto an adjacent monitor / neighboring window.
+        geometry = geometry.clippedToScreen(metrics.screenFrame)
         let surfaceFrame = geometry.surfaceFrame
         appliedTargetFrame = geometry.targetFrame
         appliedSurfaceFrame = surfaceFrame
@@ -339,14 +343,14 @@ extension BorderWindow {
         needsRedraw = true
     }
 
-    private func backingScale(for targetFrame: CGRect) -> CGFloat {
+    private func backingMetrics(for targetFrame: CGRect) -> (scale: CGFloat, screenFrame: CGRect) {
         if cachedScale > 0, cachedScaleScreenFrame.contains(targetFrame.center) {
-            return cachedScale
+            return (cachedScale, cachedScaleScreenFrame)
         }
         let (scale, screenFrame) = operations.backingScaleForFrame(targetFrame)
         cachedScale = scale
         cachedScaleScreenFrame = screenFrame
-        return scale
+        return (scale, screenFrame)
     }
 
     private func draw(geometry: BorderConfig.ResolvedGeometry) {
