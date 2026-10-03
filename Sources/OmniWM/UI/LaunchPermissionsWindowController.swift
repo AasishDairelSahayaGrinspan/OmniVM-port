@@ -3,6 +3,7 @@
 
 import AppKit
 import ApplicationServices
+import Combine
 import CoreGraphics
 import Observation
 import Security
@@ -140,10 +141,22 @@ func currentSigningSummary() -> String {
 @MainActor @Observable
 final class LaunchPermissionsModel {    private(set) var snapshot: LaunchPermissionSnapshot
     @ObservationIgnored private let environment: LaunchPermissionEnvironment
+    /// Set once a Grant Access prompt has been fired this session — drives the relaunch hint.
+    private(set) var grantAttempted = false
+    /// Bundle identifier + signing identity, so users grant the exact TCC record.
+    private(set) var signingSummary: String
 
     init(environment: LaunchPermissionEnvironment = .live) {
         self.environment = environment
         snapshot = environment.snapshot()
+        signingSummary = "\(Bundle.main.bundleIdentifier ?? "?bundle") · \(currentSigningSummary())"
+        // Live AX updates via the existing distributed-notification monitor.
+        Task { @MainActor [weak self] in
+            for await _ in AccessibilityPermissionMonitor.shared.stream(initial: false) {
+                guard let self else { break }
+                self.refresh()
+            }
+        }
     }
 
     var primaryActionTitle: String {
@@ -154,13 +167,11 @@ final class LaunchPermissionsModel {    private(set) var snapshot: LaunchPermiss
 
     func refresh() {
         snapshot = environment.snapshot()
-#if DEBUG
-        // INTEL PORT DEBUG (temporary): log raw TCC values + signing identity on every check.
+        // Always-on diagnostics (release-safe): raw TCC values + signing identity.
         let ax = snapshot.accessibilityGranted ? 1 : 0
         let im = snapshot.inputMonitoringGranted ? 1 : 0
         let sr = snapshot.screenRecordingGranted ? 1 : 0
         NSLog("[OmniWM-PermDebug] refresh AX=%d IM=%d SR=%d sig=%@", ax, im, sr, currentSigningSummary())
-#endif
     }
 
     func request(_ kind: LaunchPermissionKind) {
@@ -169,7 +180,14 @@ final class LaunchPermissionsModel {    private(set) var snapshot: LaunchPermiss
         case .inputMonitoring: environment.requestInputMonitoring()
         case .screenRecording: environment.requestScreenRecording()
         }
+        grantAttempted = true
         refresh()
+        // The TCC prompt resolves asynchronously — re-read after it settles
+        // instead of caching the pre-prompt false forever.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(1.5))
+            self?.refresh()
+        }
     }
 }
 
@@ -244,6 +262,8 @@ struct LaunchPermissionsView: View {
     @Bindable var model: LaunchPermissionsModel
     let onStart: @MainActor () -> Void
     let onQuit: @MainActor () -> Void
+    /// Polls TCC while the window is visible so grants flip live without Check Again.
+    private let pollTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -274,6 +294,16 @@ struct LaunchPermissionsView: View {
 
             Divider()
 
+            if model.grantAttempted, !model.snapshot.requiredGranted {
+                Text(
+                    "If you just granted access, quit and fully relaunch the app — macOS caches Input Monitoring until relaunch. Then click Check Again."
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+            }
+
             HStack(spacing: 12) {
                 Button("Quit OmniWM", action: onQuit)
                 Spacer()
@@ -284,11 +314,20 @@ struct LaunchPermissionsView: View {
                     .disabled(!model.snapshot.requiredGranted)
             }
             .padding(20)
+
+            Text("This app: \(model.signingSummary). Tick the entry with this exact name in System Settings.")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
         }
         .frame(minWidth: 640, minHeight: 500)
         .background(.background)
         .onAppear(perform: model.refresh)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            model.refresh()
+        }
+        .onReceive(pollTimer) { _ in
             model.refresh()
         }
     }
