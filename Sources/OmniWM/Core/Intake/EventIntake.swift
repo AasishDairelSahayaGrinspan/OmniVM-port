@@ -130,6 +130,9 @@ final class EventIntake {
         var orderedEvents: [StampedIntakeEvent] = []
         var spareOrderedEvents: [StampedIntakeEvent] = []
         var pendingCGSFrameWindowIds: Set<UInt32> = []
+        /// INTEL LOW-POWER: coalesce order/title bursts per window (resize/focus storms).
+        var pendingCGSOrderWindowIds: Set<UInt32> = []
+        var pendingCGSTitleWindowIds: Set<UInt32> = []
         var openMouseMovedSeq: UInt64?
         var openLeftDraggedSeq: UInt64?
         var openRightDraggedSeq: UInt64?
@@ -214,6 +217,8 @@ final class EventIntake {
             state.orderedEvents.removeAll(keepingCapacity: false)
             state.spareOrderedEvents.removeAll(keepingCapacity: false)
             state.pendingCGSFrameWindowIds.removeAll(keepingCapacity: false)
+            state.pendingCGSOrderWindowIds.removeAll(keepingCapacity: false)
+            state.pendingCGSTitleWindowIds.removeAll(keepingCapacity: false)
             state.closeMouseCoalescingWindows()
             return dropped
         }
@@ -265,6 +270,14 @@ final class EventIntake {
         case let .cgs(.frameChanged(windowId)):
             state.closeMouseCoalescingWindows()
             guard state.pendingCGSFrameWindowIds.insert(windowId).inserted else { return }
+
+        case let .cgs(.orderChanged(windowId)):
+            state.closeMouseCoalescingWindows()
+            guard state.pendingCGSOrderWindowIds.insert(windowId).inserted else { return }
+
+        case let .cgs(.titleChanged(windowId)):
+            state.closeMouseCoalescingWindows()
+            guard state.pendingCGSTitleWindowIds.insert(windowId).inserted else { return }
 
         case let .cgs(.closed(windowId)),
              let .cgs(.destroyed(windowId, _)):
@@ -371,6 +384,8 @@ final class EventIntake {
             events.removeAll(keepingCapacity: true)
             swap(&events, &state.orderedEvents)
             state.pendingCGSFrameWindowIds.removeAll(keepingCapacity: true)
+            state.pendingCGSOrderWindowIds.removeAll(keepingCapacity: true)
+            state.pendingCGSTitleWindowIds.removeAll(keepingCapacity: true)
             state.closeMouseCoalescingWindows()
             state.drainScheduled = false
             state.performanceCounters?.recordDrain(events)

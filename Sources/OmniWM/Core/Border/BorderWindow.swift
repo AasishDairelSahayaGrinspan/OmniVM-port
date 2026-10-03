@@ -47,7 +47,8 @@ final class BorderWindow {
     private var isVisible = false
     private var lastOrderedTargetToken: WindowToken?
     private var lastConfiguredScale: CGFloat = 0
-    private var currentCornerRadii = WindowCornerRadii(uniform: 9.0)
+    // INTEL PORT: Sequoia AppKit radius ≈ 10pt (was upstream 9.0) for exact hug.
+    private var currentCornerRadii = WindowCornerRadii(uniform: 10.0)
     private var cachedScale: CGFloat = 0
     private var cachedScaleScreenFrame: CGRect = .null
     private var cachedTargetLevel: CachedTargetLevel?
@@ -60,7 +61,7 @@ final class BorderWindow {
     private(set) var needsWindowLevelRetry = false
     private(set) var appliedTargetLevel: Int32 = 0
 
-    private let defaultCornerRadii = WindowCornerRadii(uniform: 9.0)
+    private let defaultCornerRadii = WindowCornerRadii(uniform: 10.0)
 
     init(config: BorderConfig, operations: Operations = .live) {
         self.config = config
@@ -91,7 +92,7 @@ final class BorderWindow {
     func update(
         frame targetFrame: CGRect,
         targetToken: WindowToken,
-        cornerRadii: WindowCornerRadii = WindowCornerRadii(uniform: 9.0),
+        cornerRadii: WindowCornerRadii = WindowCornerRadii(uniform: 10.0),
         forceOrdering: Bool = false
     ) -> Bool {
         BorderOpMetricsRecorder.shared.noteUpdate()
@@ -126,7 +127,12 @@ final class BorderWindow {
             BorderOpMetricsRecorder.shared.noteReshape()
             needsRedraw = true
         }
-        if currentCornerRadii != resolvedCornerRadii {
+        // INTEL CURVE BLEND: 0.5px epsilon avoids flicker redraw on sub-pixel
+        // SkyLight radius noise during resize.
+        if !currentCornerRadii.isWithin(
+            resolvedCornerRadii,
+            tolerance: CGFloat(IntelPerfPolicy.cornerRadiusEpsilon)
+        ) {
             needsRedraw = true
         }
         currentSurfaceFrame = localGeometry.surfaceFrame

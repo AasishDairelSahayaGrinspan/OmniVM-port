@@ -41,7 +41,8 @@ final class BorderSurfaceApplier {
     private let cornerSampleProvider: @MainActor (WindowToken) async throws -> WindowCornerSample?
     private let surfaceCoordinator = SurfaceCoordinator.shared
     private var registeredSurfaceWindowNumber: Int?
-    private let defaultCornerRadii = WindowCornerRadii(uniform: 9.0)
+    // INTEL PORT: Sequoia radius ≈ 10pt for exact hug when SkyLight has no sample.
+    private let defaultCornerRadii = WindowCornerRadii(uniform: 10.0)
     private let surfaceID = "border-surface"
     private var screenParametersObserver: NSObjectProtocol?
     private var scaleInvalidated = false
@@ -154,12 +155,21 @@ final class BorderSurfaceApplier {
 
     private func canReuseAppliedBorder(_ desired: DesiredBorderSurface, cornerRadii: WindowCornerRadii) -> Bool {
         guard let applied else { return false }
+        // INTEL CURVE BLEND: epsilon compare on radii to avoid shimmer redraws.
+        let radiiMatch: Bool = if let appliedCornerRadii {
+            appliedCornerRadii.isWithin(
+                cornerRadii,
+                tolerance: CGFloat(IntelPerfPolicy.cornerRadiusEpsilon)
+            )
+        } else {
+            false
+        }
         return !scaleInvalidated
             && borderWindow?.needsWindowLevelRetry != true
             && borderWindow?.hasDeferredLevelUpdate != true
             && applied.token == desired.token
             && applied.config == desired.config
-            && appliedCornerRadii == cornerRadii
+            && radiiMatch
             && desired.frame.approximatelyEqual(to: applied.frame, tolerance: FrameTolerance.frameWrite)
     }
 
@@ -200,6 +210,10 @@ final class BorderSurfaceApplier {
                 BorderOpMetricsRecorder.shared.noteCornerRadiusHit()
                 if refresh {
                     cornerRetryState = nil
+                }
+                // INTEL CURVE BLEND: map all-zero sample to Sequoia default.
+                if cachedCornerSample.sample.radii.isAllZero {
+                    return defaultCornerRadii
                 }
                 return cachedCornerSample.sample.radii
             }
@@ -263,6 +277,11 @@ final class BorderSurfaceApplier {
 
     private func fallbackCornerRadii(for token: WindowToken) -> WindowCornerRadii {
         guard let cachedCornerSample, cachedCornerSample.token == token else { return defaultCornerRadii }
+        // INTEL CURVE BLEND: all-zero SkyLight sample usually means "unknown",
+        // not a square window — fall back to Sequoia 10pt to avoid sharp corners.
+        if cachedCornerSample.sample.radii.isAllZero {
+            return defaultCornerRadii
+        }
         return cachedCornerSample.sample.radii
     }
 

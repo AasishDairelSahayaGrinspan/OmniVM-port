@@ -98,6 +98,15 @@ extension LayoutRefreshController {
         let entryTime = CACurrentMediaTime()
         guard let displayId = activeDisplayId(for: displayLink) else { return }
 
+        // INTEL LOW-POWER: skip alternate ticks (~30fps work on 60Hz panels).
+        if IntelPerfPolicy.displayLinkTickDivisor > 1 {
+            let count = (layoutState.tickSkipCounterByDisplay[displayId] ?? 0) + 1
+            layoutState.tickSkipCounterByDisplay[displayId] = count
+            if count % IntelPerfPolicy.displayLinkTickDivisor != 0 {
+                return
+            }
+        }
+
         let traceActive = AnimationTickTrace.shared.isActive
         let traceOrigin = traceActive
             ? FrameEffectTraceContext.makeDisplayTickOrigin(displayId: displayId)
@@ -367,8 +376,10 @@ extension LayoutRefreshController {
     private func scheduleTrailingParkAudits(displayId: CGDirectDisplayID) {
         guard ParkVisibilityAudit.shared.isActive else { return }
         layoutState.trailingAuditTask?.cancel()
+        // INTEL LOW-POWER: 5x100ms instead of 30x100ms (3s of MainActor wakeups).
+        let auditCount = IntelPerfPolicy.trailingAuditCount
         layoutState.trailingAuditTask = Task { @MainActor [weak self] in
-            for _ in 0 ..< 30 {
+            for _ in 0 ..< auditCount {
                 try? await Task.sleep(for: .milliseconds(100))
                 guard !Task.isCancelled, let self else { return }
                 self.auditParkVisibility(displayId: displayId)

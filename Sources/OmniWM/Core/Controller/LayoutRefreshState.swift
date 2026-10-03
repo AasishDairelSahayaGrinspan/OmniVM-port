@@ -42,6 +42,8 @@ struct LayoutRefreshState {
     var activeFullEnumerationCount: Int = 0
     var displayLinksByDisplay: [CGDirectDisplayID: CADisplayLink] = [:]
     var lastTickTimestampByDisplay: [CGDirectDisplayID: CFTimeInterval] = [:]
+    /// Intel low-power frame skipping: alternate vsync ticks are coalesced to ~30fps.
+    var tickSkipCounterByDisplay: [CGDirectDisplayID: Int] = [:]
     var lastParkAuditTime: CFTimeInterval = 0
     var trailingAuditTask: Task<Void, Never>?
     var refreshRateByDisplay: [CGDirectDisplayID: Double] = [:]

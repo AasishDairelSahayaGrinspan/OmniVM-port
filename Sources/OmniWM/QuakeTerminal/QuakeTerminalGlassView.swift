@@ -29,9 +29,17 @@ final class QuakeTerminalGlassView: NSView {
         backgroundOpacity: Double,
         isKeyWindow: Bool
     ) {
-        effectView.material = style == .clear ? .sheet : .hudWindow
-        effectView.blendingMode = .behindWindow
-        effectView.state = .active
+        // INTEL LOW-POWER: behindWindow live blur is a fullscreen GPU composite
+        // on UHD 630 — downgrade to opaque withinWindow on old hardware.
+        if IntelPerfPolicy.lowPowerDefault {
+            effectView.material = .windowBackground
+            effectView.blendingMode = .withinWindow
+            effectView.state = .inactive
+        } else {
+            effectView.material = style == .clear ? .sheet : .hudWindow
+            effectView.blendingMode = .behindWindow
+            effectView.state = .active
+        }
         effectView.wantsLayer = true
         effectView.layer?.cornerRadius = 0
         updateKeyStatus(isKeyWindow, backgroundColor: backgroundColor)

@@ -64,6 +64,15 @@ struct SpringConfig: Equatable {
     static let balanced = SpringConfig.niriWindowMovement
     static let `default` = SpringConfig.snappy
 
+    /// INTEL LOW-POWER: settles faster with fewer frames on old iGPU
+    /// (stiffer + looser epsilon than balanced 0.01/0.1).
+    static let intelClosing = SpringConfig(
+        dampingRatio: 1.0,
+        stiffness: 1200.0,
+        epsilon: 0.05,
+        velocityEpsilon: 0.5
+    )
+
     func with(epsilon: Double, velocityEpsilon: Double) -> SpringConfig {
         return SpringConfig(
             dampingRatio: dampingRatio,

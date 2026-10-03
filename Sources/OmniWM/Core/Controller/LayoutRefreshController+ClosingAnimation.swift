@@ -13,12 +13,17 @@ extension LayoutRefreshController {
         guard let frame = fastFrame(for: entry.token, axRef: entry.axRef) else { return }
 
         let displacement = CGPoint(x: 0, y: -12)
+        // INTEL LOW-POWER: stiffer spring + 30Hz tick settles in fewer frames.
+        let closingConfig: SpringConfig = IntelPerfPolicy.lowPowerDefault
+            ? .intelClosing : .balanced.with(epsilon: 0.01, velocityEpsilon: 0.1)
+        let closingRefreshRate = IntelPerfPolicy.lowPowerDefault
+            ? 30.0 : (layoutState.refreshRateByDisplay[monitor.displayId] ?? 60.0)
         let animation = SpringAnimation(
             from: 0,
             to: 1,
             startTime: CACurrentMediaTime(),
-            config: .balanced.with(epsilon: 0.01, velocityEpsilon: 0.1),
-            displayRefreshRate: layoutState.refreshRateByDisplay[monitor.displayId] ?? 60.0
+            config: closingConfig,
+            displayRefreshRate: closingRefreshRate
         )
 
         var animations = layoutState.closingAnimationsByDisplay[monitor.displayId] ?? [:]

@@ -13,8 +13,18 @@ final class BorderEffectLayers {
     private var glowBandLayers: [CAShapeLayer] = []
     let gradientStrokeLayer = CAGradientLayer()
     let gradientRingMaskLayer = CAShapeLayer()
+    /// INTEL CURVE BLEND: 1px soft outer stroke so the rim melts into the
+    /// window curve instead of a hard sharp edge. Single layer = negligible GPU.
+    let featherLayer = CAShapeLayer()
 
     init() {
+        featherLayer.fillColor = nil
+        featherLayer.actions = [
+            "path": NSNull(), "strokeColor": NSNull(), "lineWidth": NSNull(),
+            "bounds": NSNull(), "position": NSNull(), "contentsScale": NSNull(),
+            "hidden": NSNull(), "opacity": NSNull()
+        ]
+        featherLayer.opacity = 0.35
         glowColorLayer.isHidden = true
         glowColorLayer.actions = [
             "colors": NSNull(), "startPoint": NSNull(), "endPoint": NSNull(),
@@ -41,6 +51,7 @@ final class BorderEffectLayers {
         root.actions = ["bounds": NSNull(), "position": NSNull()]
         root.addSublayer(glowColorLayer)
         root.addSublayer(gradientStrokeLayer)
+        root.addSublayer(featherLayer)
     }
 }
 
@@ -83,6 +94,7 @@ extension BorderEffectLayers {
         glowMaskLayer.contentsScale = scale
         gradientStrokeLayer.contentsScale = scale
         gradientRingMaskLayer.contentsScale = scale
+        updateFeather(geometry: geometry, cornerRadii: cornerRadii, baseColor: baseColor, scale: scale)
     }
 
     private func updateGradient(
@@ -121,7 +133,9 @@ extension BorderEffectLayers {
         let width = geometry.width
         let ringFrame = geometry.targetFrame.insetBy(dx: -width, dy: -width)
         let effectiveScale = max(scale, 1)
-        let bandCount = min(48, max(8, Int((padding * effectiveScale).rounded(.up))))
+        // INTEL LOW-POWER: cap glow bands (was up to 48 CAShapeLayers).
+        let maxBands = IntelPerfPolicy.lowPowerDefault ? 12 : 48
+        let bandCount = min(maxBands, max(8, Int((padding * effectiveScale).rounded(.up))))
         ensureGlowBandCount(bandCount)
         let bandWidth = padding / CGFloat(bandCount)
         let radii = cornerRadii.normalized(to: geometry.targetFrame.size)
@@ -159,6 +173,38 @@ extension BorderEffectLayers {
         while glowBandLayers.count > count {
             glowBandLayers.removeLast().removeFromSuperlayer()
         }
+    }
+
+    /// Soft 1px outer stroke in the border color at low alpha so the rim
+    /// blends into the window curve instead of ending in a hard sharp edge.
+    private func updateFeather(
+        geometry: BorderConfig.ResolvedGeometry,
+        cornerRadii: WindowCornerRadii,
+        baseColor: CGColor,
+        scale: CGFloat
+    ) {
+        let effectiveScale = max(scale, 1)
+        let feather = CGFloat(IntelPerfPolicy.borderFeatherWidth)
+        guard geometry.width > 0, feather > 0 else {
+            featherLayer.isHidden = true
+            return
+        }
+        let radii = cornerRadii.normalized(to: geometry.targetFrame.size)
+        // Outer edge of the rim, outset by half the feather for a centered blend.
+        let outerFrame = geometry.targetFrame.insetBy(
+            dx: -(geometry.width + feather / 2),
+            dy: -(geometry.width + feather / 2)
+        )
+        let outerRadii = radii == .zero ? .zero : radii.adding(geometry.width + feather / 2)
+        let bounds = CGRect(origin: .zero, size: geometry.surfaceFrame.size)
+        featherLayer.isHidden = false
+        featherLayer.frame = bounds
+        featherLayer.bounds = bounds
+        featherLayer.contentsScale = effectiveScale
+        featherLayer.path = Self.roundedRectPath(in: outerFrame, radii: outerRadii)
+        featherLayer.lineWidth = feather
+        featherLayer.strokeColor = baseColor
+        featherLayer.opacity = 0.35
     }
 
     private static func roundedRectPath(in rect: CGRect, radii: WindowCornerRadii) -> CGPath {

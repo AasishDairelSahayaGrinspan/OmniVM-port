@@ -78,10 +78,18 @@ final class OverviewWindow: NSPanel {
         let bounds = CGRect(origin: .zero, size: monitor.frame.size)
         let container = NSView(frame: bounds)
         // INTEL PORT: NSGlassEffectView is macOS 26+; NSVisualEffectView on Sequoia.
+        // INTEL LOW-POWER: fullscreen behindWindow blur is the biggest iGPU hotspot —
+        // use opaque material on x86_64.
         let backdrop = NSVisualEffectView(frame: bounds)
-        backdrop.material = .hudWindow
-        backdrop.blendingMode = .behindWindow
-        backdrop.state = .active
+        if IntelPerfPolicy.lowPowerDefault {
+            backdrop.material = .windowBackground
+            backdrop.blendingMode = .withinWindow
+            backdrop.state = .inactive
+        } else {
+            backdrop.material = .hudWindow
+            backdrop.blendingMode = .behindWindow
+            backdrop.state = .active
+        }
         backdrop.appearance = NSAppearance(named: .darkAqua)
         backdrop.wantsLayer = true
         backdrop.layer?.opacity = 0

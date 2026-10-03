@@ -300,7 +300,8 @@ final class ClipboardHistoryService: @unchecked Sendable {
 
     private func resumeMonitoring() {
         guard configuration.isEnabled, timer == nil, monitoringSuspensions == 0 else { return }
-        timer = environment.makeTimer(0.5) { [weak self] in
+        // INTEL LOW-POWER: 1.5s instead of 0.5s pasteboard polling.
+        timer = environment.makeTimer(IntelPerfPolicy.clipboardPollInterval) { [weak self] in
             self?.pollPasteboard()
         }
     }

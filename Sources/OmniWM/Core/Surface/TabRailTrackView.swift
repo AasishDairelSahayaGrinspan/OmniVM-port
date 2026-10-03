@@ -48,9 +48,11 @@ final class TabRailTrackView: NSVisualEffectView {
 
     func refreshAppearance() {
         let reduceTransparency = NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency
-        material = reduceTransparency ? .windowBackground : .hudWindow
-        blendingMode = reduceTransparency ? .withinWindow : .behindWindow
-        layer?.backgroundColor = reduceTransparency
+        // INTEL LOW-POWER: opaque material avoids fullscreen blur composite on UHD 630.
+        let opaque = reduceTransparency || IntelPerfPolicy.lowPowerDefault
+        material = opaque ? .windowBackground : .hudWindow
+        blendingMode = opaque ? .withinWindow : .behindWindow
+        layer?.backgroundColor = opaque
             ? NSColor.windowBackgroundColor.cgColor
             : NSColor.clear.cgColor
         overlayView.refreshAppearance()

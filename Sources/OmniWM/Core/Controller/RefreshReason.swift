@@ -186,9 +186,9 @@ enum RefreshReason: String, Sendable {
              .overviewMutation:
             .plain
         case .axWindowCreated:
-            .debounced(nanoseconds: 4_000_000, dropWhileBusy: false)
+            .debounced(nanoseconds: IntelPerfPolicy.axCreatedDebounceNs, dropWhileBusy: false)
         case .axWindowChanged:
-            .debounced(nanoseconds: 8_000_000, dropWhileBusy: true)
+            .debounced(nanoseconds: IntelPerfPolicy.axChangedDebounceNs, dropWhileBusy: true)
         case .staleLayoutPlan:
             .plain
         case .windowDestroyed:

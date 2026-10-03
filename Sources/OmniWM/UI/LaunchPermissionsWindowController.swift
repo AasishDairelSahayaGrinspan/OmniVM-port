@@ -154,11 +154,13 @@ final class LaunchPermissionsModel {    private(set) var snapshot: LaunchPermiss
 
     func refresh() {
         snapshot = environment.snapshot()
+#if DEBUG
         // INTEL PORT DEBUG (temporary): log raw TCC values + signing identity on every check.
         let ax = snapshot.accessibilityGranted ? 1 : 0
         let im = snapshot.inputMonitoringGranted ? 1 : 0
         let sr = snapshot.screenRecordingGranted ? 1 : 0
         NSLog("[OmniWM-PermDebug] refresh AX=%d IM=%d SR=%d sig=%@", ax, im, sr, currentSigningSummary())
+#endif
     }
 
     func request(_ kind: LaunchPermissionKind) {

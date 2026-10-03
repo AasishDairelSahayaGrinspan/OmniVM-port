@@ -182,8 +182,10 @@ final class WorkspaceBarPreviewPanel: NSPanel {
 
     private func refreshAppearance() {
         let reduceTransparency = NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency
-        effectView.material = reduceTransparency ? .windowBackground : .hudWindow
-        effectView.blendingMode = reduceTransparency ? .withinWindow : .behindWindow
+        // INTEL LOW-POWER: avoid behindWindow blur on old iGPU.
+        let opaque = reduceTransparency || IntelPerfPolicy.lowPowerDefault
+        effectView.material = opaque ? .windowBackground : .hudWindow
+        effectView.blendingMode = opaque ? .withinWindow : .behindWindow
     }
 }
 

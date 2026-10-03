@@ -67,6 +67,14 @@ struct WindowCornerRadii: Equatable, Sendable {
         )
     }
 
+    /// INTEL CURVE BLEND: epsilon compare to suppress redraw flicker.
+    func isWithin(_ other: WindowCornerRadii, tolerance: CGFloat) -> Bool {
+        abs(topLeft - other.topLeft) <= tolerance
+            && abs(topRight - other.topRight) <= tolerance
+            && abs(bottomLeft - other.bottomLeft) <= tolerance
+            && abs(bottomRight - other.bottomRight) <= tolerance
+    }
+
     private func ratio(limit: CGFloat, sum: CGFloat) -> CGFloat {
         sum > 0 ? limit / sum : 1
     }
