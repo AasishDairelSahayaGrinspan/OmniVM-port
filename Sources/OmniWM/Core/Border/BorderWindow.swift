@@ -192,10 +192,13 @@ final class BorderWindow {
             appliedTargetLevel = level
             if let layerPanel {
                 layerPanel.level = NSWindow.Level(rawValue: Int(level))
-                if !isVisible {
-                    layerPanel.orderFront(nil)
-                }
                 operations.orderWindow(wid, targetWid, .below)
+                // OVERLAP FIX: sink to the back of the level. The rim extends
+                // past the target frame, and any same-level window stacked
+                // between the border and its target (neighbors, second-monitor
+                // windows) would get painted over. At the back the rim shows
+                // only in empty gaps — never over window content.
+                layerPanel.orderBack(nil)
             }
             return
         }
